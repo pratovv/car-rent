@@ -48,10 +48,7 @@ export class RentService {
         const carId = dto.car.id
         const car: CarsEntity = await this.carService.getCarById({
             id: carId,
-            lastOrder: MoreThan(dateA)
         })
-        console.log(dto.car.lastOrder)
-        console.log(dto.car.id)
         if (!car) {
             throw new HttpException('В это время свободных машин нет', 404)
         }
@@ -72,7 +69,7 @@ export class RentService {
         if (!rented) {
             throw new HttpException(`Эта бронь не найдена`, 404)
         }
-        return await this.rent.delete(rented)
+        return await this.rent.remove(rented)
     }
     async tariffs(tariff: Tariff) {
         switch (tariff) {

@@ -39,7 +39,7 @@ export class RentController {
     @ApiOperation({ summary: 'Delete order' })
     @ApiOkResponse({description:`Машина удалена`})
     @ApiNotFoundResponse({description:`Эта бронь не найдена`})
-    @Delete()
+    @Delete(':id')
     async deleteOrder(@Param('id') id: number) {
         return this.RentService.deleteOrder(id)
     }

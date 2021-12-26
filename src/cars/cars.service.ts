@@ -22,6 +22,13 @@ export class CarsService {
         }
         return car
     }
+    async findCarById(id):Promise<CarsEntity>{
+        const car = await this.cars.findOne(id)
+        if(!car){
+            throw new HttpException(`Машина не найдена`,404)
+        }
+        return car
+    }
 
 
     async createCar(createCar: CreateCarsDto): Promise<CarsEntity> {
