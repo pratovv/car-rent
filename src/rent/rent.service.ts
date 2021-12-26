@@ -1,8 +1,9 @@
 import { HttpException, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { last } from "rxjs";
 import { CarsService } from "src/cars/cars.service";
 import { CarsEntity } from "src/cars/entities/cars.entity";
-import { MoreThan  } from "typeorm";
+import { MoreThan, MoreThanOrEqual } from "typeorm";
 import { CreateOrdersDto } from "./dto/create-rent.dto";
 import { RentsEntity } from "./entities/rent.entity.";
 import { Tariff } from "./enum/tariff.enum";
@@ -20,27 +21,37 @@ export class RentService {
         return await this.rent.find()
     }
     async getActiveOrders(id): Promise<RentsEntity | null> {
-        return await this.rent.findOne({ id })
+        const order = await this.rent.findOne({ id })
+        if(!order){
+            throw new HttpException(`Данный заказ не найден`,404)
+        }
+        return order
     }
     async createOrder(dto: CreateOrdersDto) {
         if (dto.daysQuantity > 30) {
             throw new HttpException(`Максимальный срок аренды 30 дней`, 400)
         }
-        dto.expirationDate = new Date(dto.creationDate)
+        const dateA = new Date(dto.creationDate)
+        const dateB = new Date(dto.expirationDate)
 
-        if (dto.expirationDate.getDay() === 0 || dto.expirationDate.getDay() === 6) {
+        dto.expirationDate = new Date(dateA)
+
+        if (dateB.getDay() === 0 || dateB.getDate() === 6) {
             throw new HttpException(`Начало даты аренды не может выпадать на выходной день (суббота, воскресенье)`, 400)
         }
-        dto.expirationDate.setDate(dto.expirationDate.getDate() + dto.daysQuantity)
-        if (dto.expirationDate.getDay() === 0 || dto.expirationDate.getDay() === 6) {
+        dto.expirationDate.setDate(dateA.getDate() + dto.daysQuantity)
+        if (dateB.getDay() === 0 || dateB.getDay() === 6) {
             throw new HttpException(
                 `конец аренды не может выпадать на выходной день (суббота, воскресенье).`, 400
             )
         }
+        const carId = dto.car.id
         const car: CarsEntity = await this.carService.getCarById({
-            id: dto.car.id,
-            lastOrderDate: MoreThan(dto.creationDate)
+            id: carId,
+            lastOrder: MoreThan(dateA)
         })
+        console.log(dto.car.lastOrder)
+        console.log(dto.car.id)
         if (!car) {
             throw new HttpException('В это время свободных машин нет', 404)
         }
@@ -50,7 +61,7 @@ export class RentService {
             throw new HttpException(`Пауза между бронированиями должна составлять 3 дня`, 404)
         }
         const tariff = await this.tariffs(dto.tariff)
-        Object.assign(dto,tariff)
+        Object.assign(dto, tariff)
         const res = Number(dto.daysQuantity) * Number(dto.price)
         dto.totalPrice = await this.calcDiscount(res, dto.daysQuantity)
         dto.km *= Number(dto.daysQuantity)
@@ -63,7 +74,7 @@ export class RentService {
         }
         return await this.rent.delete(rented)
     }
-    async tariffs(tariff: Tariff){
+    async tariffs(tariff: Tariff) {
         switch (tariff) {
             case Tariff.first:
                 return { price: 270, km: 200 }
@@ -78,14 +89,14 @@ export class RentService {
             case days > 2 && days < 6:
                 return await this.calcDiscount(price, 5)
             case days > 5 && days < 15:
-                return await this.calcDiscount(price, 10)        
+                return await this.calcDiscount(price, 10)
             case days > 14 && days < 31:
                 return await this.calcDiscount(price, 15)
             default:
                 return price
         }
     }
-    async calcDiscount(price:number,reduction:number){
-        return price*(100-reduction)/100
+    async calcDiscount(price: number, reduction: number) {
+        return price * (100 - reduction) / 100
     }
 }

@@ -9,7 +9,7 @@ export interface IRent {
 
     createDate: Date
 
-    expirationDate: Date
+    expirationDate?: Date
 
     km?: number
 

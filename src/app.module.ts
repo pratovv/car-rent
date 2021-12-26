@@ -6,6 +6,8 @@ import {config} from 'dotenv'
 import { UsersModule } from './users/users.module';
 
 import { RentsEntity } from './rent/entities/rent.entity.';
+import { RentsModule } from './rent/rent.module';
+import { AuthModule } from './auth/auth.module';
 config()
 
 @Module({
@@ -22,8 +24,8 @@ config()
   }),
     CarsModule,
     UsersModule,
- 
-    RentsEntity
+    RentsModule,
+    AuthModule
   ],
   controllers: [],
   providers: [],

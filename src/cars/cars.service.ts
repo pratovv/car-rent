@@ -15,29 +15,35 @@ export class CarsService {
     async getCars(): Promise<CarsEntity[]> {
         return await this.cars.find();
     }
-    async getCarById(data?): Promise<CarsEntity | null> {
-        return await this.cars.findOne({ where: { data } })
+    async getCarById(conditions?): Promise<CarsEntity | null> {
+        const car = await this.cars.findOne(conditions)
+        if(!car){
+            throw new HttpException(`Мишина не найдена`,404)
+        }
+        return car
     }
+
+
     async createCar(createCar: CreateCarsDto): Promise<CarsEntity> {
-        const car = await this.getCarById(createCar.vin)
-        if(car){
-            throw new HttpException(`Данная машина зарегестрирована`,409)
+        const car = await this.getCarById({ vin: createCar.vin })
+        if (car) {
+            throw new HttpException(`Данная машина зарегестрирована`, 409)
         }
         return await this.cars.save(createCar)
+
     }
-    async updateCar(id: number, updateCar: UpdateCarsDto):Promise<CarsEntity> {
-        const car = await this.getCarById(updateCar.id)
-        if(car){
-            Object.assign(car,id)
-            return await this.cars.save(car)
-        }else{
-            `Машина с таким id ${id} не найдена`
+    async updateCar(id: number, updateCar: UpdateCarsDto): Promise<CarsEntity> {
+        const car = await this.getCarById({ id: updateCar.id })
+        if (!car) {
+            throw new HttpException(`Данная машина не найдена`, 404)
         }
+        Object.assign(car, updateCar)
+        return await this.cars.save(car)
     }
     async deleteCar(id: number): Promise<void> {
         const car = await this.getCarById(id)
-        if(!car){
-            throw new HttpException(`Машина с таким id ${id} не найдена`,409)
+        if (!car) {
+            throw new HttpException(`Машина с таким id ${id} не найдена`, 409)
         }
         await this.cars.delete(id)
     }

@@ -1,5 +1,5 @@
 export interface IUsers{
-    id:number;
+    id?:number;
 
     firstname:string;
 

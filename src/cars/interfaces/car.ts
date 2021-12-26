@@ -1,4 +1,4 @@
-export interface ICar{
+export interface ICar {
     id?: number;
 
     brand: string;
@@ -9,5 +9,5 @@ export interface ICar{
 
     vin: string;
 
-    lastOrder?:Date;
+    lastOrder?: Date;
 }
